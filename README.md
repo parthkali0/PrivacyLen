@@ -8,12 +8,84 @@ opt-outs, and clause-level change tracking — all wrapped in a dark-mode
 cybersecurity / SOC-style operations panel.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB)
+![Node 20+](https://img.shields.io/badge/Node.js-20%2B-339933)
 ![FastAPI](https://img.shields.io/badge/backend-FastAPI-v2.0.0-009688)
 ![Next.js](https://img.shields.io/badge/frontend-Next.js%2015-000000)
 ![Tailwind CSS](https://img.shields.io/badge/styling-Tailwind%20CSS%204-38b2ac)
 ![Browser](https://img.shields.io/badge/extension-Chrome%20%7C%20Edge%20MV3-4285F4)
+![Tests](https://img.shields.io/badge/tests-34%20passing-brightgreen)
 
 </div>
+
+---
+
+## 🚀 Quick Start
+
+```
+.\start.ps1        (Windows)
+./start.sh         (macOS / Linux)
+```
+
+That single command does everything: checks **Python 3.11+** and **Node 20+**,
+creates `backend/.venv` and installs requirements, installs frontend deps on
+first run, then launches **FastAPI (:8000)** and **Next.js (:3000)**
+concurrently — and only prints `System ready` after the backend `/health`
+endpoint confirms **200 OK**.
+
+**Windows (PowerShell):**
+
+```powershell
+.\start.ps1
+```
+
+**macOS / Linux (WSL works too):**
+
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+Open the dashboard at <http://localhost:3000>, interactive API docs at
+<http://localhost:8000/docs>. Logs stream to `backend.log` / `frontend.log`,
+and the script is idempotent — re-running it just re-verifies and re-launches
+anything that isn't already up.
+
+> Skip the optional Ollama LLM setup with `.\start.ps1 -SkipOllama` /
+> `./start.sh --skip-ollama` (the regex engine needs no LLM at all).
+
+### Alternative: full stack with Docker
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+- Dashboard: <http://localhost:3000>
+- API docs: <http://localhost:8000/docs>
+- Inside Docker, the backend reaches host Ollama via `http://host.docker.internal:11434` (automatic).
+
+### Run without Docker (manual)
+
+**Backend**
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload      # http://localhost:8000
+```
+
+**Frontend**
+
+```bash
+cd frontend
+npm install
+npm run dev                        # http://localhost:3000
+```
+
+> `npm ci` is used automatically when `package-lock.json` is present.
 
 ---
 
@@ -30,17 +102,21 @@ page — and Privacy Lens returns:
 - **Actionable CCPA / CPRA / GDPR opt-out emails** generated from flagged clauses
 - **Clause-level diff tracking** between policy revisions (silent terms changes caught)
 
-> **Instant by default.** The core engine is a lightweight regex/rule matcher
-> that returns structured results in under **50 ms** with no LLM and no network
-> calls. An optional Ollama LLM path (`ANALYSIS_MODE=hybrid|llm`) produces
-> richer summaries when you want them.
+## Architecture highlights
 
-Two clients consume the same API: the **Privacy Lens v2.4 Enterprise dashboard**
-(Next.js, SOC-style dark panel) and a **Manifest V3 browser extension** that
-overlays a trust badge, highlights risky terms, and detects sign-up forms in
-real time.
+- **Ultra-fast hybrid regex engine — under 50 ms.** The default analysis path is
+  a lightweight regex/rule matcher with zero LLM and zero network calls.
+  Structured audits come back in milliseconds. An optional
+  `ANALYSIS_MODE=hybrid|llm` path routes to a local Ollama model for richer
+  natural-language summaries.
+- **Air-gapped & 100% local.** Nothing you paste ever leaves your machine. No
+  SaaS API keys, no external tracking, no shared telemetry. The dashboard,
+  engine, and (optionally) LLM all run on localhost.
+- **Manifest V3 browser extension.** Overlays a live trust-score badge on any
+  page, wavy-underlines risky terms in the page text, detects sign-up /
+  registration forms, and applies your dealbreaker preferences in real time.
 
-## Architecture
+### Architecture diagram
 
 ```
 ┌────────────────────────┐        ┌──────────────────────────────┐
@@ -53,15 +129,15 @@ real time.
 ┌───────────────────────────────────────────────────────────────────┐
 │                FastAPI Backend (:8000)   v2.0.0                  │
 │                                                                   │
-│   POST /api/v1/analyze  — trust score, summary, red flags         │
-│   POST /api/v1/optout   — CCPA/CPRA/GDPR opt-out email            │
-│   POST /api/v1/policies — save a tracked policy (SQLite)          │
-│   GET  /api/v1/policies — list tracked policies                   │
-│   POST /api/v1/diff     — clause-level drift between revisions    │
+│   POST /api/v1/analyze  - trust score, summary, red flags         │
+│   POST /api/v1/optout   - CCPA/CPRA/GDPR opt-out email            │
+│   POST /api/v1/policies - save a tracked policy (SQLite)          │
+│   GET  /api/v1/policies - list tracked policies                   │
+│   POST /api/v1/diff     - clause-level drift between revisions    │
 │                                                                   │
 │   Analysis engine:                                                │
-│     ├─ [DEFAULT] Regex/rule matcher (instant, <50ms)              │
-│     └─ [optional] Ollama LLM  (llama3.1:8b ─► qwen2.5:7b)        │
+│     +- [DEFAULT] Regex/rule matcher (instant, <50ms)              │
+│     +- [optional] Ollama LLM  (llama3.1:8b -> qwen2.5:7b)         │
 │   Policy store: SQLite (stdlib) + schema-validated Pydantic models│
 └───────┬──────────────────────────────────────┬────────────────────┘
         │  (optional)                          │  (provisioned)
@@ -88,8 +164,8 @@ privacy-lens/
 ├── frontend/         Next.js 15 + Tailwind CSS 4 — v2.4 Enterprise dashboard
 ├── extension/        Chrome/Edge Manifest V3 extension
 ├── docker-compose.yml  Full-stack orchestration (backend + frontend + Postgres/pgvector)
-├── start.ps1         One-command launcher (Windows)
-├── start.sh          One-command launcher (macOS / Linux)
+├── start.ps1         One-command setup & launcher (Windows)
+├── start.sh          One-command setup & launcher (macOS / Linux)
 └── .env.example      All tunable environment variables
 ```
 
@@ -114,71 +190,6 @@ ollama pull qwen2.5:7b    # automatic fallback (pick any model you have instead)
 
 ---
 
-## Quick start (recommended: one command)
-
-> **Note:** `start.ps1` / `start.sh` are the quickest path. They handle
-> everything: Python venv, `pip install`, `npm install`, starting Ollama,
-> pulling a default model if none is present, then launching backend + frontend.
-
-**Windows (PowerShell):**
-
-```powershell
-.\start.ps1
-```
-
-**macOS / Linux:**
-
-```bash
-chmod +x start.sh
-./start.sh
-```
-
-That's it. Open the dashboard at <http://localhost:3000>, API docs at
-<http://localhost:8000/docs>. Logs land in `backend.log` / `frontend.log`.
-
-### Alternative: full stack with Docker
-
-1. Install Ollama and pull the models (see above).
-2. Copy the environment template:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Start the stack:
-
-   ```bash
-   docker compose up --build
-   ```
-
-4. Open the dashboard at <http://localhost:3000>, the API at
-   <http://localhost:8000/docs>, and the DB at `localhost:5432`.
-
-> Inside Docker the backend reaches your host Ollama via
-> `http://host.docker.internal:11434` (configured automatically).
-
-### Run without Docker
-
-**Backend**
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload      # http://localhost:8000
-```
-
-**Frontend**
-
-```bash
-cd frontend
-npm install
-npm run dev                        # http://localhost:3000
-```
-
----
-
 ## The v2.4 Enterprise dashboard
 
 A dark-mode security-operations panel with:
@@ -186,7 +197,7 @@ A dark-mode security-operations panel with:
 - **Collapsible sidebar** — Policy Analyzer, Action Center (live badge), Diff
   Tracker, Audit History, Settings & Rules, plus a local SLM telemetry box.
 - **Top utility bar** — global search (`Ctrl+K`), engine-mode badge, one-click
-  audit export, and “New Audit”.
+  audit export, and "New Audit".
 - **Code editor surface** — a `document.terms` code view with line numbers,
   red wavy-underlined legal terms, and live telemetry (lines, tokens, entropy).
 - **Threat-matrix metrics** — trust-score gauge, vulnerability profile, and
@@ -195,9 +206,19 @@ A dark-mode security-operations panel with:
   Data, Rights Surrendered, and Actionable Opt-Outs with severity filters,
   sorting, evidence export, and legal-counsel flagging.
 - Offline-friendly: a built-in sample audit renders the panel instantly if the
-  backend isn’t running.
+  backend isn't running.
+
+---
 
 ## API
+
+### `GET /api/v1/health`
+
+Liveness probe — the setup scripts gate readiness on this:
+
+```json
+{ "status": "ok", "version": "2.0.0", "mode": "fast" }
+```
 
 ### `POST /api/v1/analyze`
 
@@ -244,12 +265,44 @@ Generate a CCPA/CPRA/GDPR opt-out email:
 }
 ```
 
-Returns `subject`, `body`, and `references` (cited statutes).
+Returns:
 
-### `POST /api/v1/policies` · `GET /api/v1/policies`
+```json
+{
+  "subject": "Opt-out request — Acme Corp",
+  "body": "…plain-English opt-out email…",
+  "references": ["CCPA §1798.120", "GDPR Art. 21"]
+}
+```
 
-Save a tracked policy (idempotent by normalized text hash) and list saved
-archives. Saves persist in local SQLite.
+### `POST /api/v1/policies`
+
+Save a tracked policy (idempotent by normalized text hash; persists in SQLite):
+
+```json
+{
+  "name": "Example.com Privacy Policy",
+  "url": "https://example.com/privacy-policy",
+  "text": "…full policy text…"
+}
+```
+
+### `GET /api/v1/policies`
+
+```json
+{
+  "policies": [
+    {
+      "id": 1,
+      "name": "Example.com Privacy Policy",
+      "url": "https://example.com/privacy-policy",
+      "text_hash": "9f86d081884c7d659a2f…",
+      "created_at": "2026-09-07T10:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
 
 ### `POST /api/v1/diff`
 
