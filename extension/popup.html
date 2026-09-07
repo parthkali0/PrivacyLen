@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Privacy Lens</title>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Privacy Lens</h1>
+    <span class="badge">local AI</span>
+  </header>
+
+  <main id="app">
+    <div class="card">
+      <div class="source-actions">
+        <button id="use-selected" class="chip" type="button">Use selected text</button>
+        <button id="use-current-url" class="chip chip--active" type="button">Current page URL</button>
+      </div>
+      <textarea
+        id="custom-text"
+        rows="4"
+        placeholder="…or paste policy text here, then click “Use selected text”"
+      ></textarea>
+      <button id="analyze" class="btn" type="button" disabled>Analyze</button>
+      <p id="status" class="status"></p>
+    </div>
+
+    <section id="result" class="result hidden">
+      <div class="score-block">
+        <span class="score" id="score">&ndash;</span>
+        <div>
+          <p class="score-label" id="score-label">Trust score /10</p>
+          <p class="score-title" id="platform-name"></p>
+        </div>
+      </div>
+      <p class="summary" id="summary"></p>
+      <ul class="flags" id="flags"></ul>
+    </section>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

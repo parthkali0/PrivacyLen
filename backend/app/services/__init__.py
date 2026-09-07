@@ -1,0 +1,1 @@
+"""Service layer: scraping and LLM orchestration."""
