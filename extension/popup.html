@@ -8,8 +8,8 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>Privacy Lens</h1>
-    <span class="badge">local AI</span>
+    <h1>Privacy Lens <span class="ver">v2</span></h1>
+    <span class="badge">overlay</span>
   </header>
 
   <main id="app">
@@ -23,7 +23,8 @@
         rows="4"
         placeholder="…or paste policy text here, then click “Use selected text”"
       ></textarea>
-      <button id="analyze" class="btn" type="button" disabled>Analyze</button>
+      <button id="analyze" class="btn" type="button" disabled>Analyze &amp; overlay</button>
+      <p id="detected" class="detected"></p>
       <p id="status" class="status"></p>
     </div>
 
@@ -36,7 +37,19 @@
         </div>
       </div>
       <p class="summary" id="summary"></p>
+      <div class="overlay-actions">
+        <button id="re-badge" class="btn btn--ghost" type="button">Show badge again</button>
+        <button id="clear-highlights" class="btn btn--ghost" type="button">Clear page marks</button>
+      </div>
       <ul class="flags" id="flags"></ul>
+    </section>
+
+    <section class="card card--settings">
+      <div class="settings-head">
+        <h2>Dealbreaker preferences</h2>
+        <span class="hint">Matched flags are elevated to the top &amp; highlighted on the page.</span>
+      </div>
+      <div id="settings" class="settings"></div>
     </section>
   </main>
 

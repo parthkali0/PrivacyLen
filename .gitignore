@@ -33,3 +33,8 @@ pg_data/
 *.log
 *.log.*
 *.err
+
+# Local databases / runtime artifacts
+*.db
+*.sqlite
+*.sqlite3

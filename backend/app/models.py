@@ -68,3 +68,87 @@ class AnalyzeResponse(BaseModel):
     analyzed_at: str = Field(description="UTC ISO-8601 timestamp of the analysis.")
     source: Optional[str] = Field(default=None, description="URL analyzed, if any.")
     model_used: str = Field(description="Ollama model that produced the analysis.")
+
+
+# --------------------------------------------------------------------------- #
+# v2 models: opt-out generator, policy tracker and diff engine.
+# --------------------------------------------------------------------------- #
+
+
+class OptOutRequest(BaseModel):
+    """Request to generate a legal opt-out email template."""
+
+    company_name: str = Field(min_length=1, max_length=200, description="Company/platform to address the email to.")
+    flagged_items: list[str] = Field(default_factory=list, max_length=50, description="Concerns to cite in the email.")
+
+    @field_validator("company_name")
+    @classmethod
+    def company_name_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("company_name must not be blank")
+        return value.strip()
+
+
+class OptOutResponse(BaseModel):
+    """A ready-to-send opt-out email referencing CCPA/GDPR rights."""
+
+    subject: str = Field(description="Email subject line.")
+    body: str = Field(description="Plain-text email body with placeholders for the user's identity.")
+    references: list[str] = Field(default_factory=list, description="Legal statutes cited.")
+
+
+class TrackPolicyRequest(BaseModel):
+    """Request to save a policy URL + text into the local policy store."""
+
+    url: Optional[str] = Field(default=None, max_length=2048)
+    text: str = Field(min_length=1, max_length=200_000)
+
+    @field_validator("url")
+    @classmethod
+    def url_must_be_http(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not value.startswith(("http://", "https://")):
+            raise ValueError("url must start with http:// or https://")
+        return value
+
+
+class PolicyRecord(BaseModel):
+    """Saved policy entry returned by the tracker."""
+
+    id: int
+    url: Optional[str] = None
+    text_hash: str = Field(description="SHA-256 of the normalized text.")
+    text_preview: str = Field(description="First ~160 characters of the policy.")
+    char_count: int
+    saved_at: str = Field(description="UTC ISO-8601 timestamp.")
+
+
+class DiffRequest(BaseModel):
+    """Compare two versions of an agreement.
+
+    Provide ``new_text`` plus exactly one base source: inline ``base_text``,
+    a previously saved ``base_id``, or the latest saved version for ``url``.
+    """
+
+    base_text: Optional[str] = Field(default=None, max_length=2_000_000)
+    base_id: Optional[int] = Field(default=None)
+    url: Optional[str] = Field(default=None, max_length=2048)
+    new_text: str = Field(min_length=1, max_length=2_000_000)
+
+    @field_validator("url")
+    @classmethod
+    def url_must_be_http(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not value.startswith(("http://", "https://")):
+            raise ValueError("url must start with http:// or https://")
+        return value
+
+
+class DiffResult(BaseModel):
+    """Added/removed clauses between two agreement versions."""
+
+    base_identifier: str = Field(description="How the base version was resolved (url, id, or inline).")
+    base_text_hash: str
+    new_text_hash: str
+    added_clauses: list[str] = Field(default_factory=list)
+    removed_clauses: list[str] = Field(default_factory=list)
+    unchanged_clause_count: int = 0
+    change_percent: float = Field(ge=0, le=100, description="Share of clauses that differ.")

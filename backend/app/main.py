@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import analyze
+from app.routers import analyze, optout, policies
 
 settings = get_settings()
 
@@ -31,6 +31,8 @@ app.add_middleware(
 )
 
 app.include_router(analyze.router, prefix=settings.api_prefix, tags=["analyze"])
+app.include_router(optout.router, prefix=settings.api_prefix, tags=["optout"])
+app.include_router(policies.router, prefix=settings.api_prefix, tags=["policies"])
 
 
 @app.get("/health", tags=["meta"], summary="Health check")

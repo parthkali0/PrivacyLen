@@ -191,3 +191,102 @@ textarea:focus {
 .hidden {
   display: none;
 }
+
+/* v2: detection hint, settings toggles, overlay action buttons */
+.detected {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--slate-500);
+  min-height: 14px;
+}
+
+.detected--warn {
+  color: var(--amber);
+}
+
+.card--settings {
+  border-top: 1px solid var(--slate-200);
+}
+
+.settings-head h2 {
+  font-size: 13px;
+  color: var(--slate-800);
+}
+
+.hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--slate-500);
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 168px;
+  overflow-y: auto;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--slate-700);
+  padding: 5px 8px;
+  border: 1px solid var(--slate-200);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.setting input {
+  accent-color: var(--indigo);
+  margin: 0;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn--ghost {
+  width: auto;
+  margin: 0;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--indigo);
+  border: 1px solid var(--indigo-light);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.btn--ghost:hover {
+  background: #eef2ff;
+}
+
+.flag--dealbreaker {
+  box-shadow: inset 4px 0 0 var(--indigo);
+}
+
+.dealbreak-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--indigo);
+  border-radius: 999px;
+  vertical-align: 1px;
+}
+
+.ver {
+  font-size: 11px;
+  color: var(--slate-500);
+  font-weight: 500;
+}

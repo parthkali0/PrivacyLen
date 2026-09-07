@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Privacy Lens"
-    app_version: str = "1.0.0"
+    app_version: str = "2.0.0"
     api_prefix: str = "/api/v1"
 
     ollama_base_url: str = "http://localhost:11434"
